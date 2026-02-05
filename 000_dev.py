@@ -87,14 +87,46 @@ def load_field_map(path="cm70.fluk.gz", *, bounds_error=False, fill_value=0.0):
     return FieldInterpolator(x_unique, y_unique, bx_sorted, by_sorted, bounds_error=bounds_error, fill_value=fill_value)
 
 
+def plot_field_map(path="cm70.fluk.gz", *, component="Bmag", cmap="viridis", shading="auto", save=None):
+    """Plot the field map using pcolormesh; component can be Bmag, Bx, or By."""
+    import matplotlib.pyplot as plt
+
+    field = load_field_map(path)
+
+    if component.lower() in ("bx",):
+        data = field.bx_grid
+        title = "Bx (Tesla)"
+    elif component.lower() in ("by",):
+        data = field.by_grid
+        title = "By (Tesla)"
+    elif component.lower() in ("b", "bmag", "mag"):
+        data = np.hypot(field.bx_grid, field.by_grid)
+        title = "|B| (Tesla)"
+    else:
+        raise ValueError("component must be one of: Bmag, Bx, By.")
+
+    X, Y = np.meshgrid(field.x_grid, field.y_grid, indexing="ij")
+
+    fig, ax = plt.subplots()
+    pcm = ax.pcolormesh(X, Y, data, shading=shading, cmap=cmap)
+    ax.set_xlabel("x [cm]")
+    ax.set_ylabel("y [cm]")
+    ax.set_title(title)
+    fig.colorbar(pcm, ax=ax, label="Tesla")
+
+    if save:
+        fig.savefig(save, bbox_inches="tight")
+
+    return fig, ax
+
+
 if __name__ == "__main__":
-    field = load_field_map()
+    # Example: plot the field magnitude and show on screen.
+    fig, ax = plot_field_map(component="Bmag")
+    try:
+        import matplotlib.pyplot as plt
 
-    # Example: evaluate on a grid (x, y in cm; fields in Tesla).
-    xs = np.linspace(field.x_grid[0], field.x_grid[-1], 5)
-    ys = np.linspace(field.y_grid[0], field.y_grid[-1], 5)
-    XS, YS = np.meshgrid(xs, ys, indexing="ij")
-    bx_vals, by_vals = field(XS, YS)
-
-    print("Bx sample (Tesla):")
-    print(bx_vals)
+        plt.show()
+    except Exception:
+        # In headless environments the figure can still be saved via the return handle.
+        fig.savefig("fieldmap_pcolormesh.png", bbox_inches="tight")
