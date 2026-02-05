@@ -120,13 +120,39 @@ def plot_field_map(path="cm70.fluk.gz", *, component="Bmag", cmap="viridis", sha
     return fig, ax
 
 
+def plot_cut_y(y_value_cm, path="cm70.fluk.gz", *, n_points=400, save=None):
+    """Plot Bx and By along a horizontal cut at the given y (cm)."""
+    import matplotlib.pyplot as plt
+
+    field = load_field_map(path)
+    xs = np.linspace(field.x_grid.min(), field.x_grid.max(), n_points)
+    ys = np.full_like(xs, float(y_value_cm))
+    bx, by = field(xs, ys)
+
+    fig, ax = plt.subplots()
+    ax.plot(xs, bx, label="Bx")
+    ax.plot(xs, by, label="By")
+    ax.set_xlabel("x [cm]")
+    ax.set_ylabel("Field [T]")
+    ax.set_title(f"Field cut at y = {y_value_cm} cm")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    if save:
+        fig.savefig(save, bbox_inches="tight")
+
+    return fig, ax
+
+
 if __name__ == "__main__":
     # Example: plot the field magnitude and show on screen.
-    fig, ax = plot_field_map(component="Bmag")
+    fig, ax = plot_field_map(component="Bmag", save="fieldmap_pcolormesh.png")
+    fig_cut, ax_cut = plot_cut_y(3.0, save="cut_y3.png")
     try:
         import matplotlib.pyplot as plt
 
-        plt.show()
+        plt.show()  # shows both if interactive backend is available
     except Exception:
         # In headless environments the figure can still be saved via the return handle.
         fig.savefig("fieldmap_pcolormesh.png", bbox_inches="tight")
+        fig_cut.savefig("cut_y3.png", bbox_inches="tight")
