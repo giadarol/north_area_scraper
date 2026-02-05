@@ -144,10 +144,37 @@ def plot_cut_y(y_value_cm, path="cm70.fluk.gz", *, n_points=400, save=None):
     return fig, ax
 
 
+def plot_field_lines(path="cm70.fluk.gz", *, density=1.0, cmap="plasma", save=None, nx=200, ny=200):
+    """Plot field lines (streamplot) colored by |B| with arrow orientation."""
+    import matplotlib.pyplot as plt
+
+    field = load_field_map(path)
+
+    # streamplot needs uniformly spaced x/y; resample from the interpolator onto a regular grid
+    x = np.linspace(field.x_grid.min(), field.x_grid.max(), nx)
+    y = np.linspace(field.y_grid.min(), field.y_grid.max(), ny)
+    X, Y = np.meshgrid(x, y, indexing="xy")
+    bx, by = field(X, Y)
+    mag = np.hypot(bx, by)
+
+    fig, ax = plt.subplots()
+    strm = ax.streamplot(X, Y, bx, by, color=mag, cmap=cmap, density=density, arrowsize=1.2)
+    ax.set_xlabel("x [cm]")
+    ax.set_ylabel("y [cm]")
+    ax.set_title("Field lines (colored by |B|)")
+    fig.colorbar(strm.lines, ax=ax, label="|B| [T]")
+
+    if save:
+        fig.savefig(save, bbox_inches="tight")
+
+    return fig, ax
+
+
 if __name__ == "__main__":
     # Example: plot the field magnitude and show on screen.
     fig, ax = plot_field_map(component="Bmag", save="fieldmap_pcolormesh.png")
     fig_cut, ax_cut = plot_cut_y(3.0, save="cut_y3.png")
+    fig_stream, ax_stream = plot_field_lines(save="field_lines.png")
     try:
         import matplotlib.pyplot as plt
 
@@ -156,3 +183,4 @@ if __name__ == "__main__":
         # In headless environments the figure can still be saved via the return handle.
         fig.savefig("fieldmap_pcolormesh.png", bbox_inches="tight")
         fig_cut.savefig("cut_y3.png", bbox_inches="tight")
+        fig_stream.savefig("field_lines.png", bbox_inches="tight")
