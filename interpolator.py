@@ -15,9 +15,9 @@ class FieldInterpolator:
     Parameters
     ----------
     x_grid : 1D array-like
-        Monotonically increasing x coordinates of the grid (cm).
+        Monotonically increasing x coordinates of the grid.
     y_grid : 1D array-like
-        Monotonically increasing y coordinates of the grid (cm).
+        Monotonically increasing y coordinates of the grid.
     bx_grid : 2D array-like
         Bx values at each (x, y) grid point (Tesla), shape (len(x_grid), len(y_grid)).
     by_grid : 2D array-like
@@ -102,9 +102,12 @@ class FieldInterpolator:
         return bx_val, by_val
 
 
-def load_field_map(path="cm70.fluk.gz", *, bounds_error=False, fill_value=0.0):
+def load_field_map(path, *, bounds_error=False, fill_value=0.0, scale_xy=1.0):
     """Load the (x, y, Bx, By) map from disk and return a FieldInterpolator."""
     x, y, bx, by = np.loadtxt(path, unpack=True, delimiter=",")
+
+    x *= scale_xy
+    y *= scale_xy
 
     x_unique = np.unique(x)
     y_unique = np.unique(y)
@@ -120,11 +123,9 @@ def load_field_map(path="cm70.fluk.gz", *, bounds_error=False, fill_value=0.0):
     return FieldInterpolator(x_unique, y_unique, bx_sorted, by_sorted, bounds_error=bounds_error, fill_value=fill_value)
 
 
-def plot_field_map(path="cm70.fluk.gz", *, component="Bmag", cmap="viridis", shading="auto", save=None, nx=200, ny=200):
+def plot_field_map(field, *, component="Bmag", cmap="viridis", shading="auto", save=None, nx=200, ny=200):
     """Plot the field map in all four quadrants using pcolormesh; component can be Bmag, Bx, or By."""
     import matplotlib.pyplot as plt
-
-    field = load_field_map(path)
 
     if component.lower() in ("bx",):
         data = field.bx_grid
@@ -155,8 +156,8 @@ def plot_field_map(path="cm70.fluk.gz", *, component="Bmag", cmap="viridis", sha
 
     fig, ax = plt.subplots()
     pcm = ax.pcolormesh(X, Y, data, shading=shading, cmap=cmap)
-    ax.set_xlabel("x [cm]")
-    ax.set_ylabel("y [cm]")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
     ax.set_title(title)
     fig.colorbar(pcm, ax=ax, label="Tesla")
 
@@ -166,11 +167,10 @@ def plot_field_map(path="cm70.fluk.gz", *, component="Bmag", cmap="viridis", sha
     return fig, ax
 
 
-def plot_cut_y(y_value_cm, path="cm70.fluk.gz", *, n_points=400, save=None):
-    """Plot Bx and By along a horizontal cut at the given y (cm)."""
+def plot_cut_y(field, y_value_cm, *, n_points=400, save=None):
+    """Plot Bx and By along a horizontal cut at the given y (m)."""
     import matplotlib.pyplot as plt
 
-    field = load_field_map(path)
     xs = np.linspace(field.x_grid.min(), field.x_grid.max(), n_points)
     ys = np.full_like(xs, float(y_value_cm))
     bx, by = field(xs, ys)
@@ -178,9 +178,9 @@ def plot_cut_y(y_value_cm, path="cm70.fluk.gz", *, n_points=400, save=None):
     fig, ax = plt.subplots()
     ax.plot(xs, bx, label="Bx")
     ax.plot(xs, by, label="By")
-    ax.set_xlabel("x [cm]")
+    ax.set_xlabel("x [m]")
     ax.set_ylabel("Field [T]")
-    ax.set_title(f"Field cut at y = {y_value_cm} cm")
+    ax.set_title(f"Field cut at y = {y_value_cm} m")
     ax.legend()
     ax.grid(True, alpha=0.3)
 
@@ -190,12 +190,9 @@ def plot_cut_y(y_value_cm, path="cm70.fluk.gz", *, n_points=400, save=None):
     return fig, ax
 
 
-def plot_field_lines(path="cm70.fluk.gz", *, density=1.0, cmap="plasma", save=None, nx=200, ny=200):
+def plot_field_lines(field, *, density=1.0, cmap="plasma", save=None, nx=200, ny=200):
     """Plot field lines (streamplot) colored by |B| with arrow orientation."""
     import matplotlib.pyplot as plt
-
-    field = load_field_map(path)
-
     # streamplot needs uniformly spaced x/y; resample from the interpolator onto a regular grid
     x_max = field.x_grid.max()
     y_max = field.y_grid.max()
@@ -207,8 +204,8 @@ def plot_field_lines(path="cm70.fluk.gz", *, density=1.0, cmap="plasma", save=No
 
     fig, ax = plt.subplots()
     strm = ax.streamplot(X, Y, bx, by, color=mag, cmap=cmap, density=density, arrowsize=1.2)
-    ax.set_xlabel("x [cm]")
-    ax.set_ylabel("y [cm]")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
     ax.set_title("Field lines (colored by |B|)")
     fig.colorbar(strm.lines, ax=ax, label="|B| [T]")
 
