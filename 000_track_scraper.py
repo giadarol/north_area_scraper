@@ -72,6 +72,12 @@ line.track(p_y, multi_element_monitor_at='_all_')
 s_y = line.record_multi_element_last_track.get('s', turn=0)
 y_y = line.record_multi_element_last_track.get('y', turn=0)
 
+# Time tracking for many particles
+n_time = 10000
+p_time = line.build_particles(x=np.linspace(-0.3, 0.3, 101))
+line.track(p_time, time=True)
+print(f"Tracking time for {n_time} particles: {line.time_last_track:.3f} s")
+
 import matplotlib.pyplot as plt
 plt.close('all')
 plt.figure(1)
