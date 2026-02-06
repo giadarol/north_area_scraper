@@ -8,9 +8,9 @@ class FieldInterpolator:
     If the provided grid only covers the first quadrant, the interpolator
     extends it to all four quadrants using mirror symmetries:
       Quadrant (+,+):  Bx,  By
-      Quadrant (-,+):  Bx, -By   (Bx even in x, By odd in x)
-      Quadrant (-,-): -Bx, -By   (both flip when x<0 and y<0 together)
-      Quadrant (+,-): -Bx,  By   (Bx odd in y, By even in y)
+      Quadrant (-,+):  Bx, -By
+      Quadrant (-,-): -Bx, -By
+      Quadrant (+,-): -Bx,  By
 
     Parameters
     ----------
