@@ -60,26 +60,48 @@ line.get_table().show()
 
 line.set_particle_ref('proton', energy0=10e9)
 
-p = line.build_particles(x=np.linspace(-0.2, 0.2, 21))
+# Check particles in the horizontal mid plane (y=0)
+p_x = line.build_particles(x=np.linspace(-0.3, 0.3, 21))
+line.track(p_x, multi_element_monitor_at='_all_')
+s_x = line.record_multi_element_last_track.get('s', turn=0)
+x_x = line.record_multi_element_last_track.get('x', turn=0)
 
-line.track(p, multi_element_monitor_at='_all_')
-
-s = line.record_multi_element_last_track.get('s', turn=0)
-x = line.record_multi_element_last_track.get('x', turn=0)
+# Check particles in the vertical mid plane (x=0)
+p_y = line.build_particles(y=np.linspace(-0.3, 0.3, 21))
+line.track(p_y, multi_element_monitor_at='_all_')
+s_y = line.record_multi_element_last_track.get('s', turn=0)
+y_y = line.record_multi_element_last_track.get('y', turn=0)
 
 import matplotlib.pyplot as plt
 plt.close('all')
 plt.figure(1)
-plt.plot(s.T, x.T, '.-')
+plt.plot(s_x.T, x_x.T, '-')
 plt.xlabel('s [m]')
 plt.ylabel('x [m]')
+plt.suptitle('Horizontal mid plane (y=0)')
 
-# Field profile on the mid plane
-x_grid = np.linspace(-0.2, 0.2, 1001)
-y_grid = np.zeros_like(x_grid)
-bx, by, bz = field_3d(x_grid, y_grid, 0*x_grid)
 plt.figure(2)
+plt.plot(s_y.T, y_y.T, '-')
+plt.xlabel('s [m]')
+plt.ylabel('y [m]')
+plt.suptitle('Vertical mid plane (x=0)')
+
+# Field profile on the horizontal mid plane (y=0)
+x_grid = np.linspace(-0.3, 0.3, 1001)
+bx, by, bz = field_3d(x_grid, 0*x_grid, 0*x_grid)
+plt.figure(100)
 plt.plot(x_grid, by, label='Bx')
+plt.xlabel('x [m]')
+plt.ylabel('Field [T]')
+plt.title('Field profile on the horizontal mid plane (y=0)')
+
+y_grid = np.linspace(-0.3, 0.3, 1001)
+bx, by, bz = field_3d(0*y_grid, y_grid, 0*y_grid)
+plt.figure(101)
+plt.plot(y_grid, bx, label='Bx')
+plt.xlabel('y [m]')
+plt.ylabel('Field [T]')
+plt.title('Field profile on the vertical mid plane (x=0)')
 
 plt.show()
 
