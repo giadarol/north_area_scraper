@@ -3,10 +3,6 @@ import numpy as np
 
 import xtrack as xt
 
-# TODO:
-# - remove log and check speed
-
-
 # Beamline in which we will insert the scraper
 env = xt.Environment()
 line = env.new_line(components=[
