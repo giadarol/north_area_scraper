@@ -3,6 +3,10 @@ import numpy as np
 
 import xtrack as xt
 
+# TODO:
+# - remove log and check speed
+
+
 # Beamline in which we will insert the scraper
 env = xt.Environment()
 line = env.new_line(components=[
@@ -14,7 +18,7 @@ line = env.new_line(components=[
 
 # Load the field map
 fieldmap_file = "cm70.fluk.gz"
-field_interpolator_2d = intp.load_field_map(fieldmap_file)
+field_interpolator_2d = intp.load_field_map(fieldmap_file, scale_xy=0.01)  # cm to m
 
 # Build a callable compatible with Xsuite Boris integrator (needs 3 components)
 def field_3d(x, y, s):
@@ -55,4 +59,27 @@ line.get_table().show()
 # ...
 
 line.set_particle_ref('proton', energy0=10e9)
+
+p = line.build_particles(x=np.linspace(-0.2, 0.2, 21))
+
+line.track(p, multi_element_monitor_at='_all_')
+
+s = line.record_multi_element_last_track.get('s', turn=0)
+x = line.record_multi_element_last_track.get('x', turn=0)
+
+import matplotlib.pyplot as plt
+plt.close('all')
+plt.figure(1)
+plt.plot(s.T, x.T, '.-')
+plt.xlabel('s [m]')
+plt.ylabel('x [m]')
+
+# Field profile on the mid plane
+x_grid = np.linspace(-0.2, 0.2, 1001)
+y_grid = np.zeros_like(x_grid)
+bx, by, bz = field_3d(x_grid, y_grid, 0*x_grid)
+plt.figure(2)
+plt.plot(x_grid, by, label='Bx')
+
+plt.show()
 
